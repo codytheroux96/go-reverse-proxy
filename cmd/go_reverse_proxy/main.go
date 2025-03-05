@@ -18,5 +18,5 @@ func main() {
 		server_two.ServerTwo()
 	}()
 
-	select{}
+	select {}
 }

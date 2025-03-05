@@ -26,5 +26,4 @@ func ServerOne() {
 	err := serverOne.ListenAndServe()
 	app.logger.Error(err.Error())
 	os.Exit(1)
-
 }
