@@ -21,7 +21,7 @@ func ServerOne() {
 		WriteTimeout: 30 * time.Second,
 	}
 	
-	logger.Info("starting server one", "addr", serverOne.Addr)
+	logger.Info("SERVER ONE IS RUNNING", "addr", serverOne.Addr)
 
 	err := serverOne.ListenAndServe()
 	logger.Error(err.Error())
