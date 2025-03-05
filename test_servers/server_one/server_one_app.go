@@ -10,7 +10,7 @@ type application struct {
 	logger *slog.Logger
 }
 
-func NewApplication() *application {
+func newApplication() *application {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &application{

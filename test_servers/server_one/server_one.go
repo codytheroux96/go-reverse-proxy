@@ -11,7 +11,7 @@ func ServerOne() {
 	addr := flag.String("addr", ":4200", "HTTP Network Address")
 	flag.Parse()
 
-	app := NewApplication()
+	app := newApplication()
 
 	serverOne := &http.Server{
 		Addr:         *addr,
