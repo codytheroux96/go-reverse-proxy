@@ -1,4 +1,4 @@
-package server_one
+package server_two
 
 import (
 	"log/slog"
@@ -21,18 +21,18 @@ func newApplication() *application {
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/s1health", app.healthCheckHandler)
-	mux.HandleFunc("/s1post", app.listHandler)
+	mux.HandleFunc("/s2health", app.healthCheckHandler)
+	mux.HandleFunc("/s2post", app.listHandler)
 
 	return mux
 }
 
 func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Server One Is Up And Healthy"))
+	w.Write([]byte("Server Two Is Up And Healthy"))
 }
 
 func (app *application) listHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Server One Is Serving A Fake List"))
+	w.Write([]byte("Server Two Is Serving A Fake List"))
 }

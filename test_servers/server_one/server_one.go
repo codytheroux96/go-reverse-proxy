@@ -1,20 +1,16 @@
 package server_one
 
 import (
-	"flag"
 	"net/http"
 	"os"
 	"time"
 )
 
 func ServerOne() {
-	addr := flag.String("addr", ":4200", "HTTP Network Address")
-	flag.Parse()
-
 	app := newApplication()
 
 	serverOne := &http.Server{
-		Addr:         *addr,
+		Addr:         ":4200",
 		Handler:      app.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
