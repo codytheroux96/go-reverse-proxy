@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/codytheroux96/go-reverse-proxy/internal/app"
 )
 
 func ServerOne() {
@@ -16,10 +14,6 @@ func ServerOne() {
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	app := &app.Application{
-		Logger: logger,
-	}
-
 	serverOne := &http.Server{
 		Addr: *addr,
 		IdleTimeout: time.Minute,
@@ -27,7 +21,7 @@ func ServerOne() {
 		WriteTimeout: 30 * time.Second,
 	}
 	
-	app.Logger.Info("starting server one", "addr", serverOne.Addr)
+	logger.Info("starting server one", "addr", serverOne.Addr)
 
 	err := serverOne.ListenAndServe()
 	logger.Error(err.Error())
