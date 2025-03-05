@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/codytheroux96/go-reverse-proxy/test_servers"
 	"github.com/codytheroux96/go-reverse-proxy/internal/app"
+	"github.com/codytheroux96/go-reverse-proxy/test_servers/server_one"
+	"github.com/codytheroux96/go-reverse-proxy/test_servers/server_two"
 )
 
 func main() {
@@ -10,11 +11,11 @@ func main() {
 	app.Logger.Info("MESSAGE FROM MAIN SERVER: APPLICATION IS RUNNING!!!")
 
 	go func() {
-		testservers.ServerOne()
+		server_one.ServerOne()
 	}()
 
 	go func() {
-		testservers.ServerTwo()
+		server_two.ServerTwo()
 	}()
 
 	select{}

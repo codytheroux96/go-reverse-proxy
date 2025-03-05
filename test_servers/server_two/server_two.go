@@ -1,4 +1,4 @@
-package testservers
+package server_two
 
 import (
 	"fmt"

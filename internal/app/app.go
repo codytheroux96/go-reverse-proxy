@@ -11,7 +11,7 @@ type Application struct {
 
 func NewApplication() *Application {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	
+
 	return &Application{
 		Logger: logger,
 	}
