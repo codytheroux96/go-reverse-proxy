@@ -5,6 +5,13 @@ import (
 )
 
 func main() {
-	testservers.ServerOne()
-	testservers.ServerTwo()
+	go func() {
+		testservers.ServerOne()
+	}()
+
+	go func() {
+		testservers.ServerTwo()
+	}()
+
+	select{}
 }
