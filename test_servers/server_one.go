@@ -1,9 +1,9 @@
-package main
+package testservers
 
 import (
 	"fmt"
 )
 
-func main() {
+func ServerOne() {
 	fmt.Println("Hello Reverse Proxy")
 }
