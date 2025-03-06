@@ -21,18 +21,18 @@ func newApplication() *application {
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/s1health", app.handlerHealthcheck)
-	mux.HandleFunc("/s1post", app.handlerList)
+	mux.HandleFunc("/s1health", app.handleHealthcheck)
+	mux.HandleFunc("/s1post", app.handleList)
 
 	return mux
 }
 
-func (app *application) handlerHealthcheck(w http.ResponseWriter, r *http.Request) {
+func (app *application) handleHealthcheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Server One Is Up And Healthy"))
 }
 
-func (app *application) handlerList(w http.ResponseWriter, r *http.Request) {
+func (app *application) handleList(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Server One Is Serving A Fake List"))
 }
