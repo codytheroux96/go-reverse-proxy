@@ -22,7 +22,7 @@ func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/s1health", app.handleHealthcheck)
-	mux.HandleFunc("/s1post", app.handleList)
+	mux.HandleFunc("/s1list", app.handleList)
 
 	return mux
 }
