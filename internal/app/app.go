@@ -7,6 +7,7 @@ import (
 
 type Application struct {
 	Logger *slog.Logger
+	// collection of servers to handle/serve will go here (server1, server2, etc)
 }
 
 func NewApplication() *Application {

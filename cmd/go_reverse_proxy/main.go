@@ -15,8 +15,8 @@ func main() {
 	app.Logger.Info("MESSAGE FROM MAIN SERVER: APPLICATION IS RUNNING!!!")
 
 	proxyServer := &http.Server{
-		Addr: ":8080",
-		// Handler:      app.routes(),
+		Addr:         ":8080",
+		Handler:      app.Routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
