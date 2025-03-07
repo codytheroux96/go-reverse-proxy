@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,10 +26,16 @@ func (app *Application) HandleServerOneGet (w http.ResponseWriter, r *http.Reque
 }
 
 func (app *Application) HandleServerOnePost (w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("http://localhost:4200/s1list")
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:4200/s1list", bytes.NewBuffer([]byte{}))
 	if err != nil {
 		fmt.Println("not hitting server one")
 		os.Exit(1)
+	}
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("not hitting server two")
 	}
 	defer resp.Body.Close()
 
@@ -58,7 +65,13 @@ func (app *Application) HandleServerTwoGet (w http.ResponseWriter, r *http.Reque
 }
 
 func (app *Application) HandleServerTwoPost (w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get("http://localhost:2200/s2list")
+	req, err := http.NewRequest(http.MethodPost, "http://localhost:2200/s2list", bytes.NewBuffer([]byte{}))
+	if err != nil {
+		fmt.Println("not hitting server two")
+	}
+	
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("not hitting server two")
 	}

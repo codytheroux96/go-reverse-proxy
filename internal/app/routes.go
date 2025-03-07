@@ -13,7 +13,7 @@ func (app *Application) Routes() http.Handler {
 	r.Get("/s2get", app.HandleServerTwoGet) 
 
 	r.Post("/s1post", app.HandleServerOnePost)
-	r.Post("/s1post", app.HandleServerTwoPost)
+	r.Post("/s2post", app.HandleServerTwoPost)
 
 	return r
 }
