@@ -16,13 +16,18 @@ func (app *Application) HandleServerOneGet (w http.ResponseWriter, r *http.Reque
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		fmt.Println("could not read body on server one")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
 
 func (app *Application) HandleServerOnePost (w http.ResponseWriter, r *http.Request) {
@@ -39,13 +44,18 @@ func (app *Application) HandleServerOnePost (w http.ResponseWriter, r *http.Requ
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		fmt.Println("could not read body on server one")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
 
 func (app *Application) HandleServerTwoGet (w http.ResponseWriter, r *http.Request) {
@@ -55,13 +65,18 @@ func (app *Application) HandleServerTwoGet (w http.ResponseWriter, r *http.Reque
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		fmt.Println("could not read body on server two")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
 
 func (app *Application) HandleServerTwoPost (w http.ResponseWriter, r *http.Request) {
@@ -77,11 +92,16 @@ func (app *Application) HandleServerTwoPost (w http.ResponseWriter, r *http.Requ
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
 		fmt.Println("could not read body on server two")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
 }
