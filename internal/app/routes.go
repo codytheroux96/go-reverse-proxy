@@ -2,10 +2,15 @@ package app
 
 import (
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (app *Application) Routes() http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	return mux
+	r.Get("/s1get", app.HandleServerOneGet)
+	r.Get("/s2get", app.HandleServerTwoGet)
+
+	return r
 }

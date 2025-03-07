@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type application struct {
@@ -19,12 +21,12 @@ func newApplication() *application {
 }
 
 func (app *application) routes() http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	mux.HandleFunc("/s1health", app.handleHealthcheck)
-	mux.HandleFunc("/s1list", app.handleList)
+	r.Get("/s1health", app.handleHealthcheck)
+	r.Post("/s1list", app.handleList)
 
-	return mux
+	return r
 }
 
 func (app *application) handleHealthcheck(w http.ResponseWriter, r *http.Request) {
