@@ -6,12 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"time"
 )
-
-func (app *Application) LogRequest(r *http.Request) {
-	app.Logger.Info("Incoming Request", "method", r.Method, "path", r.URL.Path, "timestamp", time.Now().Format(time.RFC3339))
-}
 
 func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
 	app.LogRequest(r)
