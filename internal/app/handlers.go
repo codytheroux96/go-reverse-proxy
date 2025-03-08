@@ -8,7 +8,9 @@ import (
 	"os"
 )
 
-func (app *Application) HandleServerOneGet (w http.ResponseWriter, r *http.Request) {
+func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
+	app.LogRequest(r)
+
 	resp, err := http.Get("http://localhost:4200/s1health")
 	if err != nil {
 		fmt.Println("not hitting server one")
@@ -30,7 +32,9 @@ func (app *Application) HandleServerOneGet (w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (app *Application) HandleServerOnePost (w http.ResponseWriter, r *http.Request) {
+func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Request) {
+	app.LogRequest(r)
+
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:4200/s1list", bytes.NewBuffer([]byte{}))
 	if err != nil {
 		fmt.Println("not hitting server one")
@@ -58,7 +62,9 @@ func (app *Application) HandleServerOnePost (w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (app *Application) HandleServerTwoGet (w http.ResponseWriter, r *http.Request) {
+func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Request) {
+	app.LogRequest(r)
+
 	resp, err := http.Get("http://localhost:2200/s2health")
 	if err != nil {
 		fmt.Println("not hitting server two")
@@ -79,12 +85,14 @@ func (app *Application) HandleServerTwoGet (w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (app *Application) HandleServerTwoPost (w http.ResponseWriter, r *http.Request) {
+func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Request) {
+	app.LogRequest(r)
+
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:2200/s2list", bytes.NewBuffer([]byte{}))
 	if err != nil {
 		fmt.Println("not hitting server two")
 	}
-	
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
