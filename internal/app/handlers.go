@@ -2,19 +2,17 @@ package app
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
 func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
 	app.LogRequest(r)
 
-	resp, err := http.Get("http://localhost:4200/s1health")
+	resp, err := http.Get("http://localhostt:4200/s1health")
 	if err != nil {
-		fmt.Println("not hitting server one")
-		os.Exit(1)
+		http.Error(w, "error when making GET request to server one", http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -28,7 +26,8 @@ func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Reques
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		fmt.Println("could not read body on server one")
+		http.Error(w, "could not copy body from server one on GET request", http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -37,14 +36,15 @@ func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Reque
 
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:4200/s1list", bytes.NewBuffer([]byte{}))
 	if err != nil {
-		fmt.Println("not hitting server one")
-		os.Exit(1)
+		http.Error(w, "error when making a POST request to server one", http.StatusInternalServerError)
+		return
 	}
 
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("not hitting server two")
+		http.Error(w, "error when receiving response from server one on POST request", http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -58,7 +58,7 @@ func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Reque
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		fmt.Println("could not read body on server one")
+		http.Error(w, "could not copy body from server one on POST request", http.StatusInternalServerError)
 	}
 }
 
@@ -67,7 +67,8 @@ func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Reques
 
 	resp, err := http.Get("http://localhost:2200/s2health")
 	if err != nil {
-		fmt.Println("not hitting server two")
+		http.Error(w, "error when making GET request to server two", http.StatusInternalServerError)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -81,7 +82,7 @@ func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Reques
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		fmt.Println("could not read body on server two")
+		http.Error(w, "could not copy body from server two on GET request", http.StatusInternalServerError)
 	}
 }
 
@@ -90,13 +91,13 @@ func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Reque
 
 	req, err := http.NewRequest(http.MethodPost, "http://localhost:2200/s2list", bytes.NewBuffer([]byte{}))
 	if err != nil {
-		fmt.Println("not hitting server two")
+		http.Error(w, "error when making POST request to server two", http.StatusInternalServerError)
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("not hitting server two")
+		http.Error(w, "error when receiving response from server two on POST request", http.StatusInternalServerError)
 	}
 	defer resp.Body.Close()
 
@@ -110,6 +111,6 @@ func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Reque
 
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		fmt.Println("could not read body on server two")
+		http.Error(w, "could not copy body from server two on POST request", http.StatusInternalServerError)
 	}
 }

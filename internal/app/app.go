@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 )
 
 type Application struct {
@@ -21,5 +20,5 @@ func NewApplication() *Application {
 }
 
 func (app *Application) LogRequest(r *http.Request) {
-	app.Logger.Info("Incoming Request", "method", r.Method, "path", r.URL.Path, "timestamp", time.Now().Format(time.RFC3339))
+	app.Logger.Info("Incoming Request", "method", r.Method, "path", r.URL.Path)
 }
