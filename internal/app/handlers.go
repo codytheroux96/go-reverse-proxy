@@ -9,7 +9,7 @@ import (
 func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
 	app.LogRequest(r)
 
-	resp, err := http.Get("http://localhostt:4200/s1health")
+	resp, err := http.Get("http://localhost:4200/s1health")
 	if err != nil {
 		app.Logger.Error("error when making GET request to server one", "error", err)
 		http.Error(w, "error when making GET request to server one", http.StatusInternalServerError)
