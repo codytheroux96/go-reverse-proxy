@@ -6,17 +6,32 @@ import (
 	"os"
 )
 
+type RateLimiterConfig struct {
+	enabled bool
+	rps     float64
+	burst   int
+}
+
 type Application struct {
 	Logger *slog.Logger
-	// collection of servers to handle/serve will go here (server1, server2, etc)
+	config struct {
+		Limiter RateLimiterConfig
+	}
 }
 
 func NewApplication() *Application {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	return &Application{
+	app := &Application{
 		Logger: logger,
 	}
+	app.config.Limiter = RateLimiterConfig{
+		enabled: true,
+		rps:     50,
+		burst:   250,
+	}
+
+	return app
 }
 
 func (app *Application) LogRequest(r *http.Request) {
