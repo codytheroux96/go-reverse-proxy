@@ -1,6 +1,7 @@
 package app
 
 import (
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -36,6 +37,34 @@ func (app *Application) RateLimit(next http.Handler) http.Handler {
 	}()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// need logic for the return here
+		if app.config.Limiter.enabled {
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				app.Logger.Error("error getting client IP", "error", err)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
+				return
+			}
+
+			mu.Lock()
+
+			if _, found := clients[ip]; !found {
+				clients[ip] = &client{
+					limiter: rate.NewLimiter(rate.Limit(app.config.Limiter.rps), app.config.Limiter.burst),
+				}
+			}
+
+			clients[ip].lastSeen = time.Now()
+
+			if !clients[ip].limiter.Allow() {
+				mu.Unlock()
+				app.Logger.Info("rate limit exceeded", "client_ip", ip)
+				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				return
+			}
+
+			mu.Unlock()
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
