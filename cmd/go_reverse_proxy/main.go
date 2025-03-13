@@ -16,7 +16,7 @@ func main() {
 
 	proxyServer := &http.Server{
 		Addr:         ":8080",
-		Handler:      app.Routes(),
+		Handler:      app.RateLimit(app.Routes()),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
