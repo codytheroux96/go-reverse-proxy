@@ -1,4 +1,4 @@
 package app
 
-type Cache struct {
+type ResponseCache struct {
 }
