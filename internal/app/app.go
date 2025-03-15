@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 type RateLimiterConfig struct {
@@ -14,6 +15,7 @@ type RateLimiterConfig struct {
 
 type Application struct {
 	Logger *slog.Logger
+	Cache  *ResponseCache
 	config struct {
 		Limiter RateLimiterConfig
 	}
@@ -24,7 +26,11 @@ func NewApplication() *Application {
 
 	app := &Application{
 		Logger: logger,
+		Cache:  NewResponseCache(30 * time.Second),
 	}
+
+	go app.Cache.Cleanup(15 * time.Second)
+
 	app.config.Limiter = RateLimiterConfig{
 		enabled: true,
 		rps:     50,
