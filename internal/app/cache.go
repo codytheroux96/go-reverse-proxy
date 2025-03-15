@@ -15,3 +15,15 @@ type CacheEntry struct {
 	response []byte
 	expires  time.Time
 }
+
+func (rc *ResponseCache) Store() {
+
+}
+
+func (rc *ResponseCache) Get() ([]byte, bool) {
+	
+}
+
+func (rc *ResponseCache) Cleanup() {
+	
+}
