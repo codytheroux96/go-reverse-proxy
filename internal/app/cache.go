@@ -49,6 +49,16 @@ func (rc *ResponseCache) Get(key string) ([]byte, bool) {
 	return element.response, true
 }
 
-func (rc *ResponseCache) Cleanup() {
+func (rc *ResponseCache) Cleanup(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 
+	for range ticker.C {
+		rc.mu.Lock()
+		for key, entry := range rc.cache {
+			if time.Now().After(entry.expires) {
+				delete(rc.cache, key)
+			}
+		}
+	}
 }
