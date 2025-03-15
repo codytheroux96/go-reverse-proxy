@@ -16,14 +16,27 @@ type CacheEntry struct {
 	expires  time.Time
 }
 
-func (rc *ResponseCache) Store() {
-
+func NewResponseCache(ttl time.Duration) *ResponseCache {
+	return &ResponseCache{
+		cache: make(map[string]CacheEntry),
+		ttl:   ttl,
+	}
 }
 
-func (rc *ResponseCache) Get() ([]byte, bool) {
-	
+func (rc *ResponseCache) Store(key string, data []byte) {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+
+	rc.cache[key] = CacheEntry{
+		response: data,
+		expires:  time.Now().Add(rc.ttl),
+	}
+}
+
+func (rc *ResponseCache) Get(key string) ([]byte, bool) {
+
 }
 
 func (rc *ResponseCache) Cleanup() {
-	
+
 }
