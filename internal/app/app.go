@@ -43,3 +43,5 @@ func NewApplication() *Application {
 func (app *Application) LogRequest(r *http.Request) {
 	app.Logger.Info("Incoming Request", "method", r.Method, "path", r.URL.Path)
 }
+
+// testing comment after migration assistant
