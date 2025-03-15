@@ -34,7 +34,19 @@ func (rc *ResponseCache) Store(key string, data []byte) {
 }
 
 func (rc *ResponseCache) Get(key string) ([]byte, bool) {
+	rc.mu.RLock()
+	defer rc.mu.RUnlock()
 
+	element, exists := rc.cache[key]
+	if !exists {
+		return nil, false
+	}
+
+	if time.Now().After(element.expires) {
+		return nil, false
+	}
+
+	return element.response, true
 }
 
 func (rc *ResponseCache) Cleanup() {
