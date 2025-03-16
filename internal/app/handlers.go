@@ -1,135 +1,59 @@
 package app
 
 import (
-	"bytes"
 	"io"
 	"net/http"
+	"strings"
 )
 
-func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
-	app.LogRequest(r)
+func (app *Application) reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
 
-	data, found := app.Cache.Get(r.URL.String())
-	if found {
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
-		app.Logger.Info("Cache hit!", "key", r.URL.String())
+	var backendURL, backendPath string
+	switch {
+	case strings.HasPrefix(path, "/s1/"):
+		backendURL = "http://localhost:4200"
+		backendPath = strings.TrimPrefix(path, "/s1")
+	case strings.HasPrefix(path, "/s2/"):
+		backendURL = "http://localhost:2200"
+		backendPath = strings.TrimPrefix(path, "/s2")
+	default:
+		http.Error(w, "URL Not Found", http.StatusNotFound)
 		return
 	}
 
-	resp, err := http.Get("http://localhost:4200/s1health")
-	if err != nil {
-		app.Logger.Error("error when making GET request to server one", "error", err)
-		http.Error(w, "error when making GET request to server one", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+	fullURL := backendURL + backendPath
 
-	for key, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(key, value)
+	app.Logger.Info("Forwarding request", "method", r.Method, "path", path, "backend", backendURL)
+
+	if r.Method == http.MethodGet {
+		if cachedResp, found := app.Cache.Get(path); found {
+			w.WriteHeader(http.StatusOK)
+			w.Write(cachedResp)
+			app.Logger.Info("Cache hit", "path", path)
+			return
 		}
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	req, err := http.NewRequest(r.Method, fullURL, r.Body)
 	if err != nil {
-		app.Logger.Error("could not copy body from server one on GET request", "error", err)
-		http.Error(w, "could not copy body from server one on GET request", http.StatusInternalServerError)
+		app.Logger.Error("Failed to create request", "error", err)
+		http.Error(w, "Failed to create request", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(resp.StatusCode)
-
-	app.Cache.Store(r.URL.String(), body)
-	w.Write(body)
-}
-
-func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Request) {
-	app.LogRequest(r)
-
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:4200/s1list", bytes.NewBuffer([]byte{}))
-	if err != nil {
-		app.Logger.Error("error when making a POST request to server one", "error", err)
-		http.Error(w, "error when making a POST request to server one", http.StatusInternalServerError)
-		return
-	}
-
-	client := http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		app.Logger.Error("error when receiving response from server one on POST request", "error", err)
-		http.Error(w, "error when receiving response from server one on POST request", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	for key, values := range resp.Header {
+	for key, values := range r.Header {
 		for _, value := range values {
-			w.Header().Add(key, value)
+			req.Header.Add(key, value)
 		}
-	}
-
-	w.WriteHeader(resp.StatusCode)
-
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		app.Logger.Info("could not copy body from server one on POST request", "error", err)
-		http.Error(w, "could not copy body from server one on POST request", http.StatusInternalServerError)
-	}
-}
-
-func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Request) {
-	app.LogRequest(r)
-
-	data, found := app.Cache.Get(r.URL.String())
-	if found {
-		w.WriteHeader(http.StatusOK)
-		w.Write(data)
-		app.Logger.Info("Cache hit!", "key", r.URL.String())
-		return
-	}
-
-	resp, err := http.Get("http://localhost:2200/s2health")
-	if err != nil {
-		app.Logger.Info("error when making GET request to server two", "error", err)
-		http.Error(w, "error when making GET request to server two", http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	for key, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(key, value)
-		}
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		app.Logger.Error("could not copy body from server two on GET request", "error", err)
-		http.Error(w, "could not copy body from server two on GET request", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(resp.StatusCode)
-
-	app.Cache.Store(r.URL.String(), body)
-	w.Write(body)
-}
-
-func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Request) {
-	app.LogRequest(r)
-
-	req, err := http.NewRequest(http.MethodPost, "http://localhost:2200/s2list", bytes.NewBuffer([]byte{}))
-	if err != nil {
-		app.Logger.Info("error when making POST request to server two", "error", err)
-		http.Error(w, "error when making POST request to server two", http.StatusInternalServerError)
 	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		app.Logger.Error("error when receiving response from server two on POST request", "error", err)
-		http.Error(w, "error when receiving response from server two on POST request", http.StatusInternalServerError)
+		app.Logger.Error("Error forwarding request", "error", err)
+		http.Error(w, "Error forwarding request", http.StatusBadGateway)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -139,11 +63,18 @@ func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	w.WriteHeader(resp.StatusCode)
-
-	_, err = io.Copy(w, resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		app.Logger.Error("could not copy body from server two on POST request", "error", err)
-		http.Error(w, "could not copy body from server two on POST request", http.StatusInternalServerError)
+		app.Logger.Error("Failed to read response body", "error", err)
+		http.Error(w, "Failed to read response", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	w.Write(bodyBytes)
+
+	if r.Method == http.MethodGet && resp.StatusCode == http.StatusOK {
+		app.Cache.Store(path, bodyBytes)
+		app.Logger.Info("Response cached", "path", path)
 	}
 }
