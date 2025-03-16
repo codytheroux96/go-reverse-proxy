@@ -26,10 +26,10 @@ func NewApplication() *Application {
 
 	app := &Application{
 		Logger: logger,
-		Cache:  NewResponseCache(30 * time.Second),
+		Cache:  NewResponseCache(30*time.Second, logger),
 	}
 
-	go app.Cache.Cleanup(15 * time.Second)
+	go app.Cache.Cleanup(app, 15*time.Second)
 
 	app.config.Limiter = RateLimiterConfig{
 		enabled: true,
