@@ -9,6 +9,14 @@ import (
 func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Request) {
 	app.LogRequest(r)
 
+	data, found := app.Cache.Get(r.URL.String())
+	if found {
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+		app.Logger.Info("Cache hit!", "key", r.URL.String())
+		return
+	}
+
 	resp, err := http.Get("http://localhost:4200/s1health")
 	if err != nil {
 		app.Logger.Error("error when making GET request to server one", "error", err)
@@ -23,14 +31,17 @@ func (app *Application) HandleServerOneGet(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	w.WriteHeader(resp.StatusCode)
-
-	_, err = io.Copy(w, resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		app.Logger.Error("could not copy body from server one on GET request", "error", err)
 		http.Error(w, "could not copy body from server one on GET request", http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	app.Cache.Store(r.URL.String(), body)
+	w.Write(body)
 }
 
 func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +81,14 @@ func (app *Application) HandleServerOnePost(w http.ResponseWriter, r *http.Reque
 func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Request) {
 	app.LogRequest(r)
 
+	data, found := app.Cache.Get(r.URL.String())
+	if found {
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+		app.Logger.Info("Cache hit!", "key", r.URL.String())
+		return
+	}
+
 	resp, err := http.Get("http://localhost:2200/s2health")
 	if err != nil {
 		app.Logger.Info("error when making GET request to server two", "error", err)
@@ -84,13 +103,17 @@ func (app *Application) HandleServerTwoGet(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	w.WriteHeader(resp.StatusCode)
-
-	_, err = io.Copy(w, resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		app.Logger.Error("could not copy body from server two on GET request", "error", err)
 		http.Error(w, "could not copy body from server two on GET request", http.StatusInternalServerError)
+		return
 	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	app.Cache.Store(r.URL.String(), body)
+	w.Write(body)
 }
 
 func (app *Application) HandleServerTwoPost(w http.ResponseWriter, r *http.Request) {
