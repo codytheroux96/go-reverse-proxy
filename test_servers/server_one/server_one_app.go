@@ -21,18 +21,25 @@ func newApplication() *application {
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/s1health", app.handleHealthcheck)
-	mux.HandleFunc("/s1list", app.handleList)
+	mux.HandleFunc("/s1health", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			app.handleHealthcheck(w, r)
+		default:
+			app.logger.Error("unsupported HTTP method", slog.String("method", r.Method), slog.String("url", r.URL.String()))
+			http.Error(w, "unsupported HTTP method", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/s1list", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			app.handleList(w, r)
+		default:
+			app.logger.Error("unsupported HTTP method", slog.String("method", r.Method), slog.String("url", r.URL.String()))
+			http.Error(w, "unsupported HTTP method", http.StatusMethodNotAllowed)
+		}
+	})
 
 	return mux
-}
-
-func (app *application) handleHealthcheck(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Server One Is Up And Healthy\n"))
-}
-
-func (app *application) handleList(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Server One Is Serving A Fake List\n"))
 }
