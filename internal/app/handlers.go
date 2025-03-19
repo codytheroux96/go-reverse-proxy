@@ -1,80 +1,43 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
 )
 
-func (app *Application) reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
+func (app *Application) determineBackendURl(requestPath string) (string, error) {
+	var backendURL string
 
-	var backendURL, backendPath string
 	switch {
-	case strings.HasPrefix(path, "/s1/"):
-		backendURL = "http://localhost:4200"
-		backendPath = strings.TrimPrefix(path, "/s1")
-	case strings.HasPrefix(path, "/s2/"):
-		backendURL = "http://localhost:2200"
-		backendPath = strings.TrimPrefix(path, "/s2")
+	case strings.HasPrefix(requestPath, "/s1/"):
+		backendURL = "http://localhost:4200" + strings.TrimPrefix(requestPath, "/s1")
+	case strings.HasPrefix(requestPath, "/s2/"):
+		backendURL = "http://localhost:2200" + strings.TrimPrefix(requestPath, "/s2")
 	default:
-		http.Error(w, "URL Not Found", http.StatusNotFound)
-		return
+		app.Logger.Error("Invalid backend path", "path", requestPath)
+		return "", fmt.Errorf("no matching backend for path: %s", requestPath)
 	}
 
-	fullURL := backendURL + backendPath
+	return backendURL, nil
+}
 
-	app.Logger.Info("Forwarding request", "method", r.Method, "path", path, "backend", backendURL)
-
-	if r.Method == http.MethodGet {
-		if cachedResp, found := app.Cache.Get(path); found {
-			w.WriteHeader(http.StatusOK)
-			w.Write(cachedResp)
-			app.Logger.Info("Cache hit", "path", path)
-			return
-		}
+func (app *Application) reverseProxyHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		app.HandleGetRequest(w, r)
+	case http.MethodPost:
+		app.HandlePostRequest(w, r)
+	default:
+		http.Error(w, "unsupported http method", http.StatusMethodNotAllowed)
 	}
+}
 
-	req, err := http.NewRequest(r.Method, fullURL, r.Body)
-	if err != nil {
-		app.Logger.Error("Failed to create request", "error", err)
-		http.Error(w, "Failed to create request", http.StatusInternalServerError)
-		return
-	}
+func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request) {
 
-	for key, values := range r.Header {
-		for _, value := range values {
-			req.Header.Add(key, value)
-		}
-	}
+}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		app.Logger.Error("Error forwarding request", "error", err)
-		http.Error(w, "Error forwarding request", http.StatusBadGateway)
-		return
-	}
-	defer resp.Body.Close()
+func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
 
-	for key, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(key, value)
-		}
-	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		app.Logger.Error("Failed to read response body", "error", err)
-		http.Error(w, "Failed to read response", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(resp.StatusCode)
-	w.Write(bodyBytes)
-
-	if r.Method == http.MethodGet && resp.StatusCode == http.StatusOK {
-		app.Cache.Store(path, bodyBytes)
-		app.Logger.Info("Response cached", "path", path)
-	}
 }
