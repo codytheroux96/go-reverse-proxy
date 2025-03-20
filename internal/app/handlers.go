@@ -69,7 +69,7 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 		break
 	}
 
-	if err != nil && resp.StatusCode >= 500 {
+	if err != nil || resp.StatusCode >= 500 {
 		app.Logger.Error("Final failure on GET request", "url", backendURL, "response_code", resp.StatusCode)
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 		return
