@@ -60,7 +60,7 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 		resp, err = http.Get(backendURL)
 
 		if err != nil || (resp.StatusCode >= 500 && resp.StatusCode <= 504) {
-			app.Logger.Info("Retrying GET request", "url", backendURL, "attempt", attempt, "response_code", resp.StatusCode)
+			app.Logger.Info("Retrying GET request", "url", backendURL, "attempt", attempt)
 			if attempt < maxRetries {
 				time.Sleep(backoffTimes[attempt-1])
 			}
