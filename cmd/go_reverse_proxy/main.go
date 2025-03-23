@@ -10,12 +10,21 @@ import (
 	"github.com/codytheroux96/go-reverse-proxy/test_servers/server_two"
 )
 
+func redirectHandler(w http.ResponseWriter, r *http.Request) {
+	target := "https://localhost:8443" + r.URL.Path
+	if r.URL.RawQuery != "" {
+		target += "?" + r.URL.RawQuery
+	}
+
+	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+}
+
 func main() {
 	app := app.NewApplication()
 	app.Logger.Info("MESSAGE FROM MAIN SERVER: APPLICATION IS RUNNING!!!")
 
 	proxyServer := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":8443",
 		Handler:      app.RateLimit(app.Routes()),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
@@ -30,7 +39,18 @@ func main() {
 		server_two.ServerTwo()
 	}()
 
-	err := proxyServer.ListenAndServe()
+	redirectServer := &http.Server{
+		Addr:    ":8080",
+		Handler: http.HandlerFunc(redirectHandler),
+	}
+
+	go func() {
+		if err := redirectServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			app.Logger.Error("Redirect server failed", "error", err)
+		}
+	}()
+
+	err := proxyServer.ListenAndServeTLS("cert/cert.pem", "cert/key.pem")
 	if err != nil {
 		app.Logger.Error(err.Error())
 		os.Exit(1)
