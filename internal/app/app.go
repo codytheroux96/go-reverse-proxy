@@ -19,6 +19,7 @@ type Application struct {
 	config struct {
 		Limiter RateLimiterConfig
 	}
+	Client *http.Client
 }
 
 func NewApplication() *Application {
@@ -27,6 +28,9 @@ func NewApplication() *Application {
 	app := &Application{
 		Logger: logger,
 		Cache:  NewResponseCache(30*time.Second, logger),
+		Client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 
 	go app.Cache.Cleanup(app, 15*time.Second)

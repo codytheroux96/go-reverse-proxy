@@ -56,27 +56,52 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 	backoffTimes := []time.Duration{100 * time.Millisecond, 500 * time.Millisecond, 2 * time.Second}
 
 	var resp *http.Response
+	var finalErr error
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		app.Logger.Info("Forwarding GET request", "url", backendURL, "attempt", attempt)
-		resp, err = http.Get(backendURL)
 
-		if err != nil || (resp.StatusCode >= 500 && resp.StatusCode <= 504) {
-			app.Logger.Info("Retrying GET request", "url", backendURL, "attempt", attempt)
+		req, err := http.NewRequest(http.MethodGet, backendURL, nil)
+		if err != nil {
+			app.Logger.Error("Failed to create GET request", "error", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		resp, finalErr = app.Client.Do(req)
+		if finalErr != nil {
+			app.Logger.Warn("Request failed", "url", backendURL, "error", finalErr, "attempt", attempt)
 			if attempt < maxRetries {
 				time.Sleep(backoffTimes[attempt-1])
 			}
 			continue
 		}
+
+		if resp.StatusCode >= 500 && resp.StatusCode <= 504 {
+			app.Logger.Warn("Server error from backend", "status", resp.StatusCode, "attempt", attempt)
+			if attempt < maxRetries {
+				resp.Body.Close()
+				time.Sleep(backoffTimes[attempt-1])
+				continue
+			}
+		}
+
 		break
 	}
 
-	if err != nil || resp.StatusCode >= 500 {
-		app.Logger.Error("Final failure on GET request", "url", backendURL, "response_code", resp.StatusCode)
+	if finalErr != nil {
+		app.Logger.Error("Final failure on GET request", "url", backendURL, "error", finalErr)
 		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
+	if resp == nil || resp.StatusCode >= 500 {
+		app.Logger.Error("Final failure - bad backend status", "url", backendURL, "status", resp.StatusCode)
+		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+		return
+	}
 	defer resp.Body.Close()
+
 	for key, values := range resp.Header {
 		for _, value := range values {
 			w.Header().Add(key, value)
@@ -92,6 +117,7 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(resp.StatusCode)
 	w.Write(bodyBytes)
+	app.Logger.Info("request succeeded")
 
 	if resp.StatusCode == http.StatusOK {
 		app.Cache.Store(path, bodyBytes)
@@ -119,6 +145,8 @@ func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request
 	backoffTimes := []time.Duration{100 * time.Millisecond, 500 * time.Millisecond, 2 * time.Second}
 
 	var resp *http.Response
+	var finalErr error
+
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		bodyReader := bytes.NewReader(bodyBytes)
 
@@ -135,29 +163,38 @@ func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request
 			}
 		}
 
-		resp, err = http.DefaultClient.Do(req)
-		if err != nil || (resp.StatusCode >= 500 && resp.StatusCode <= 504) {
-			app.Logger.Info("retrying POST request", "url", backendURL, "attempt", attempt)
+		resp, finalErr = app.Client.Do(req)
+		if finalErr != nil {
+			app.Logger.Warn("Request failed", "url", backendURL, "error", finalErr, "attempt", attempt)
 			if attempt < maxRetries {
 				time.Sleep(backoffTimes[attempt-1])
 			}
 			continue
 		}
+
+		if resp.StatusCode >= 500 && resp.StatusCode <= 504 {
+			app.Logger.Warn("Server error from backend", "status", resp.StatusCode, "attempt", attempt)
+			if attempt < maxRetries {
+				resp.Body.Close()
+				time.Sleep(backoffTimes[attempt-1])
+				continue
+			}
+		}
+
 		break
 	}
 
-	if resp == nil {
-		app.Logger.Error("POST request failed - no response received", "url", backendURL, "error", err)
+	if finalErr != nil {
+		app.Logger.Error("POST request failed - no response received", "url", backendURL, "error", finalErr)
 		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
-	if resp.StatusCode >= 500 {
-		app.Logger.Error("POST request failed - backend error", "url", backendURL, "status", resp.StatusCode)
-		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+	if resp == nil || resp.StatusCode >= 500 {
+		app.Logger.Error("Final failure - bad backend status", "url", backendURL, "status", resp.StatusCode)
+		http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 		return
 	}
-
 	defer resp.Body.Close()
 
 	for key, values := range resp.Header {
@@ -167,5 +204,8 @@ func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		app.Logger.Error("failed to copy response body", "error", err)
+	}
+	app.Logger.Info("request succeeded")
 }
