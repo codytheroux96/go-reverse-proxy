@@ -100,5 +100,39 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
 
+	backendURL, err := app.determineBackendURL(path)
+	if err != nil {
+		http.Error(w, "invalid backend path", http.StatusNotFound)
+		return
+	}
+
+	req, err := http.NewRequest(http.MethodPost, backendURL, r.Body)
+	if err != nil {
+		http.Error(w, "failed to create request", http.StatusInternalServerError)
+		return
+	}
+
+	for key, values := range r.Header {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	defer resp.Body.Close()
+
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
