@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -100,31 +101,63 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *Application) HandlePostRequest(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-
-	backendURL, err := app.determineBackendURL(path)
+	backendURL, err := app.determineBackendURL(r.URL.Path)
 	if err != nil {
 		http.Error(w, "invalid backend path", http.StatusNotFound)
 		return
 	}
 
-	req, err := http.NewRequest(http.MethodPost, backendURL, r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to create request", http.StatusInternalServerError)
+		app.Logger.Error("failed to read request body", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
-	for key, values := range r.Header {
-		for _, value := range values {
-			req.Header.Add(key, value)
+	maxRetries := 3
+	backoffTimes := []time.Duration{100 * time.Millisecond, 500 * time.Millisecond, 2 * time.Second}
+
+	var resp *http.Response
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		bodyReader := bytes.NewReader(bodyBytes)
+
+		req, err := http.NewRequest(http.MethodPost, backendURL, bodyReader)
+		if err != nil {
+			app.Logger.Error("failed to create POST request", "error", err)
+			http.Error(w, "failed to create request", http.StatusInternalServerError)
+			return
 		}
+
+		for key, values := range r.Header {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+
+		resp, err = http.DefaultClient.Do(req)
+		if err != nil || (resp.StatusCode >= 500 && resp.StatusCode <= 504) {
+			app.Logger.Info("retrying POST request", "url", backendURL, "attempt", attempt)
+			if attempt < maxRetries {
+				time.Sleep(backoffTimes[attempt-1])
+			}
+			continue
+		}
+		break
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
+	if resp == nil {
+		app.Logger.Error("POST request failed - no response received", "url", backendURL, "error", err)
 		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 		return
 	}
+
+	if resp.StatusCode >= 500 {
+		app.Logger.Error("POST request failed - backend error", "url", backendURL, "status", resp.StatusCode)
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
 	defer resp.Body.Close()
 
 	for key, values := range resp.Header {
