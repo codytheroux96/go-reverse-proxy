@@ -51,5 +51,9 @@ func (app *application) routes() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/s2headers", func(w http.ResponseWriter, r *http.Request) {
+		app.handleHeaders(w, r)
+	})
+
 	return mux
 }

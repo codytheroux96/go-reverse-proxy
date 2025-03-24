@@ -40,3 +40,23 @@ func (app *application) handleEcho(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
+
+func (app *application) handleHeaders(w http.ResponseWriter, r *http.Request) {
+	headersMap := make(map[string][]string)
+
+	for name, value := range r.Header {
+		app.logger.Info("headers received", slog.String("key", name), slog.Any("values", value))
+		headersMap[name] = value
+	}
+
+	jsonData, err := json.Marshal(headersMap)
+	if err != nil {
+		app.logger.Error("failed to marshal headers", slog.String("error", err.Error()))
+		http.Error(w, "failed to marshal headers", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
+}

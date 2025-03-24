@@ -68,6 +68,12 @@ func (app *Application) HandleGetRequest(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
+		for key, values := range r.Header {
+			for _, value := range values {
+				req.Header.Add(key, value)
+			}
+		}
+
 		resp, finalErr = app.Client.Do(req)
 		if finalErr != nil {
 			app.Logger.Warn("Request failed", "url", backendURL, "error", finalErr, "attempt", attempt)
