@@ -24,7 +24,7 @@ This project is a basic reverse proxy built using the Go standard library.
 
 ## Usage
 
-**If you want to run this yourself you will need to either get rid of the HTTPS redirect logic or generate your own certificates for HTTPS support**
+**If you want to run this yourself you will need to either get rid of the HTTPS redirect logic in `main.go` or generate your own certificates for HTTPS support**
 
 Run the main application and the proxy will start on port `:8080`, with test backends on ports `:4200` and `:2200`.
 
