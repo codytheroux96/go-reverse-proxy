@@ -41,5 +41,15 @@ func (app *application) routes() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/s2echo", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			app.handleEcho(w, r)
+		default:
+			app.logger.Error("unsupported HTTP method", slog.String("method", r.Method), slog.String("url", r.URL.String()))
+			http.Error(w, "unsupported HTTP method", http.StatusMethodNotAllowed)
+		}
+	})
+
 	return mux
 }
