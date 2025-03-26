@@ -50,10 +50,10 @@ func main() {
 		}
 	}()
 
-	err := proxyServer.ListenAndServeTLS("cert/cert.pem", "cert/key.pem")
-	if err != nil {
+	if err := proxyServer.ListenAndServeTLS("cert/cert.pem", "cert/key.pem"); err != nil {
 		app.Logger.Error(err.Error())
 		os.Exit(1)
 	}
+
 	select {}
 }

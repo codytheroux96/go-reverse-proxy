@@ -19,7 +19,8 @@ func ServerOne() {
 
 	app.logger.Info("SERVER ONE IS RUNNING", "addr", serverOne.Addr)
 
-	err := serverOne.ListenAndServe()
-	app.logger.Error(err.Error())
-	os.Exit(1)
+	if err := serverOne.ListenAndServe(); err != nil {
+		app.logger.Error(err.Error())
+		os.Exit(1)
+	}
 }
