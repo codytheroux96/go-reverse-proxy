@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func ServerOne() {
+func Run() {
 	app := newApplication()
 
 	serverOne := &http.Server{
