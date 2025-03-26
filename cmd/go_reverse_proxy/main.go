@@ -32,11 +32,11 @@ func main() {
 	}
 
 	go func() {
-		server_one.Run()
+		server_one.Serve()
 	}()
 
 	go func() {
-		server_two.Run()
+		server_two.Serve()
 	}()
 
 	redirectServer := &http.Server{
