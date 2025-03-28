@@ -35,7 +35,27 @@ func (reg *Registry) HandleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (reg *Registry) HandleDeregister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	var req struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
+		http.Error(w, "invalid payload in request", http.StatusBadRequest)
+		return
+	}
+
+	if err := reg.Deregister(req.Name); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "server deregistered successfully"})
 }
 
 func (reg *Registry) HandleRegistryList(w http.ResponseWriter, r *http.Request) {
