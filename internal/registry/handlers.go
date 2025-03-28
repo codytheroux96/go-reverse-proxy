@@ -31,6 +31,7 @@ func (reg *Registry) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	reg.logger.Info("server registered successfully", "server", srv.Name)
 	json.NewEncoder(w).Encode(map[string]string{"message:": "server registration successful"})
 }
 
@@ -55,9 +56,26 @@ func (reg *Registry) HandleDeregister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	reg.logger.Info("server deregistered successfully", "server", req.Name)
 	json.NewEncoder(w).Encode(map[string]string{"message": "server deregistered successfully"})
 }
 
 func (reg *Registry) HandleRegistryList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	servers := reg.ListRegistered()
+
+	response := struct {
+		Servers []Server `json:"servers"`
+	}{
+		Servers: servers,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	reg.logger.Info("request to view list of servers was made", "time", time.Now())
+	json.NewEncoder(w).Encode(response)
 }
