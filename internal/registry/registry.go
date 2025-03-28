@@ -14,10 +14,10 @@ type Registry struct {
 }
 
 type Server struct {
-	Name         string
-	BaseURL      string
-	Prefixes     []string
-	RegisteredAt time.Time
+	Name         string    `json:"name"`
+	BaseURL      string    `json:"base_url"`
+	Prefixes     []string  `json:"routes"`
+	RegisteredAt time.Time `json:"registered_at"`
 }
 
 func NewRegistry(logger *slog.Logger) *Registry {
