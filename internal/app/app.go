@@ -34,7 +34,7 @@ func NewApplication() *Application {
 		Client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		Registry: registry.NewRegistry(),
+		Registry: registry.NewRegistry(logger),
 	}
 
 	go app.Cache.Cleanup(app, 15*time.Second)

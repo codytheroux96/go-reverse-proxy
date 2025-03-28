@@ -2,6 +2,7 @@ package registry
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -9,6 +10,7 @@ import (
 type Registry struct {
 	servers map[string]Server
 	mu      sync.RWMutex
+	logger  *slog.Logger
 }
 
 type Server struct {
@@ -18,9 +20,10 @@ type Server struct {
 	RegisteredAt time.Time
 }
 
-func NewRegistry() *Registry {
+func NewRegistry(logger *slog.Logger) *Registry {
 	return &Registry{
 		servers: make(map[string]Server),
+		logger:  logger,
 	}
 }
 
