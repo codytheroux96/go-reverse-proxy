@@ -18,7 +18,7 @@ type Server struct {
 	RegisteredAt time.Time
 }
 
-func (r *Registry) NewRegistry() *Registry {
+func NewRegistry() *Registry {
 	return &Registry{
 		servers: make(map[string]Server),
 	}
@@ -46,7 +46,7 @@ func (r *Registry) Deregister(name string) error {
 
 	delete(r.servers, name)
 	return nil
-} 
+}
 
 func (r *Registry) ListRegistered() []Server {
 	r.mu.RLock()

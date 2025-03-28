@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/codytheroux96/go-reverse-proxy/internal/registry"
 )
 
 type RateLimiterConfig struct {
@@ -19,7 +21,8 @@ type Application struct {
 	config struct {
 		Limiter RateLimiterConfig
 	}
-	Client *http.Client
+	Client   *http.Client
+	Registry *registry.Registry
 }
 
 func NewApplication() *Application {
@@ -31,6 +34,7 @@ func NewApplication() *Application {
 		Client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
+		Registry: registry.NewRegistry(),
 	}
 
 	go app.Cache.Cleanup(app, 15*time.Second)
