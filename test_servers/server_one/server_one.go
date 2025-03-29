@@ -17,7 +17,7 @@ func Serve() {
 	app := newApplication()
 
 	if err := registerWithProxy(); err != nil {
-		app.logger.Error("failed to register with proxy", "error", err)
+		app.logger.Error("failed to register server one with proxy", "error", err)
 		os.Exit(1)
 	}
 
@@ -34,7 +34,7 @@ func Serve() {
 
 	go func() {
 		<-shutdown
-		app.logger.Info("shutting server down gracefully")
+		app.logger.Info("shutting server one down gracefully")
 
 		if err := deregisterFromProxy(); err != nil {
 			app.logger.Error("failed to deregister server one from proxy", "error", err)
